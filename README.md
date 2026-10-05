@@ -1,47 +1,66 @@
-# Lab Health Check
+# Homelab-Projekt
 
-A small Bash script that checks whether the core services in my
-VirtualBox home lab (SSH, Apache2, Samba) are running and reachable,
-and confirms the VM can reach its gateway.
+Ein selbst aufgebautes Homelab zum praktischen Üben von Systemadministration und Netzwerktechnik.
 
-## Why I built it
+## Überblick
 
-I set up SSH, Apache2, and Samba manually while building the lab. After
-restarting the VM a few times during networking troubleshooting, I got
-tired of checking each service by hand — so I automated the check.
-It's a small step from "I can configure services" to "I can also
-automate and monitor them," which is closer to real systems
-integration work.
+Das Projekt begann als vollständig virtualisiertes Lab mit **VirtualBox** und wird aktuell um physische Hardware (ein Raspberry Pi 3) erweitert, um virtuelle und reale Infrastruktur zu kombinieren.
 
-## What it checks
+## Teil 1: Virtuelles Lab (VirtualBox)
 
-1. Default gateway reachability (basic network sanity check)
-2. Whether `ssh`, `apache2`, and `smbd` services are active
-   (`systemctl is-active`)
-3. Whether ports 22 (SSH), 80 (Apache2), and 445 (Samba) actually
-   accept connections locally
+**Stack:**
+- Ubuntu Server 26.04 LTS (VM)
+- SSH
+- Apache2
+- Samba
 
-## How it works
+**Was umgesetzt wurde:**
+- Kompletter Neuaufbau des Homelabs auf VirtualBox
+- Konfiguration von SSH, Apache2 und Samba auf Ubuntu Server
+- Überprüfung der Samba-Dateifreigabe durch Übertragung einer Datei von einem Windows-Host auf die Ubuntu-Server-VM, bestätigt mit `ls -l`
 
-- Each check prints a colored `[OK]` / `[FAIL]` line to the terminal
-- Every result is also written to `lab_healthcheck.log` with a
-  timestamp, so I can show a history of runs, not just one snapshot
-- Script exits with code `0` if everything passed, `1` if something
-  failed — so it could later be hooked into `cron` or a monitoring
-  setup
+**Gelöste Probleme:**
+- **Captive Portal blockierte Netzwerkzugriff:** ein öffentliches WLAN blockierte den Netzwerkverkehr der VM über ein Captive Portal; gelöst durch Wechsel von VM/Host auf ein Heimnetzwerk ohne Captive Portal
+- **Samba-Schreibrechte:** Schreibzugriffe schlugen fehl, da der freigegebene Ordner `nobody:nogroup` gehörte; behoben mit `chmod -R 0777` auf dem freigegebenen Verzeichnis
+- **Windows-Gastzugriff blockiert:** Windows blockierte standardmäßig den Gastzugriff auf die Samba-Freigabe; die Einstellungen mussten angepasst werden, um die Verbindung zuzulassen
+- Zusätzlich trat während des Neuaufbaus eine Warnung zu einem fehlerhaften Grafiktreiber auf, die ebenfalls behoben wurde
 
-## Usage
+**Monitoring-Skript — `lab_healthcheck.sh`:**
+Ein Bash-Skript, das den Zustand der zentralen Lab-Dienste prüft. Es:
+- prüft die Erreichbarkeit des Standard-Gateways
+- verifiziert über `systemctl is-active`, ob `ssh`, `apache2` und `smbd` aktiv sind
+- prüft, ob die Ports 22, 80 und 445 lokale Verbindungen annehmen
+- gibt farbige `[OK]`/`[FAIL]`-Statuszeilen aus
+- protokolliert zeitgestempelte Ergebnisse in `lab_healthcheck.log`
+- beendet sich mit Statuscode 0 oder 1, sodass es später in `cron` oder ein anderes Monitoring eingebunden werden kann
 
-```bash
-chmod +x lab_healthcheck.sh
-./lab_healthcheck.sh
-```
+Wird direkt auf der Ubuntu-Server-VM ausgeführt.
 
-Run it directly on the Ubuntu Server VM (not the host), since it
-checks local service status.
+## Teil 2: Physische Hardware (in Arbeit)
 
-## Possible next steps
+Erweiterung des Labs um einen **Raspberry Pi 3** als physischen Server neben den virtuellen Maschinen.
 
-- Run it automatically via `cron` every 5 minutes
-- Send an alert (e.g. email or a simple webhook) on `FAIL`
-- Extend it to check disk space and open SSH login attempts
+**Warum:** Das virtuelle Lab deckt die Software-Ebene ab, aber ein echtes Gerät bringt zusätzliche praktische Erfahrung mit physischer Hardware und Netzwerktechnik.
+
+**Aktueller Stand:**
+- Raspberry Pi OS Lite (32-Bit) mit dem Raspberry Pi Imager auf den Pi geflasht
+- Hostname, Lokalisierung, Benutzerkonto und SSH-Zugriff (Passwort-Authentifizierung) konfiguriert
+
+**Geplante nächste Schritte:**
+- Pi per Ethernet mit dem Netzwerk verbinden und SSH-Zugriff bestätigen
+- Samba-Dateiserver auf dem Pi einrichten, als Erweiterung des virtuellen Labs
+- `lab_healthcheck.sh` (oder ein ähnliches Skript) erweitern, um auch die Dienste des Pi zu überwachen
+- Langfristig: Praxis mit einem Managed Switch und VLANs zur Netzwerksegmentierung
+
+## Roadmap
+
+Weitere geplante Erweiterungen des Labs:
+- Eine Datenbank-Komponente
+- Zusätzliche Sicherheitsmaßnahmen
+- Mehrere VMs, verbunden über eine Firewall
+- Ein einfaches Ticketsystem
+
+---
+
+*Dieses Projekt wird fortlaufend weiterentwickelt und aktualisiert.*
+
