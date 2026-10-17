@@ -36,29 +36,37 @@ Ein Bash-Skript, das den Zustand der zentralen Lab-Dienste prüft. Es:
 
 Wird direkt auf der Ubuntu-Server-VM ausgeführt.
 
-## Teil 2: Physische Hardware (in Arbeit)
+## Teil 2: Physische Hardware
 
-Erweiterung des Labs um einen **Raspberry Pi 3** als physischen Server neben den virtuellen Maschinen.
+Erweiterung des Labs um einen **Raspberry Pi 3 Model B** als physischen Server neben den virtuellen Maschinen.
 
 **Warum:** Das virtuelle Lab deckt die Software-Ebene ab, aber ein echtes Gerät bringt zusätzliche praktische Erfahrung mit physischer Hardware und Netzwerktechnik.
 
-**Aktueller Stand:**
-- Raspberry Pi OS Lite (32-Bit) mit dem Raspberry Pi Imager auf den Pi geflasht
-- Hostname, Lokalisierung, Benutzerkonto und SSH-Zugriff (Passwort-Authentifizierung) konfiguriert
+**Netzwerkaufbau:**
+Da kein klassischer Heimrouter vorhanden ist, läuft die Internetverbindung über den mobilen Hotspot eines Smartphones:
+
+```text
+Smartphone-Hotspot ──(WLAN)──> GL.iNet-Router (OpenWrt, Repeater-Modus) ──(Ethernet)──> Raspberry Pi
+Laptop ──(WLAN)──> GL.iNet-Router
+```
+
+**Umgesetzt:**
+- Raspberry Pi OS Lite (32-Bit) mit dem Raspberry Pi Imager geflasht (headless: Hostname, Lokalisierung, Benutzerkonto, SSH)
+- GL.iNet GL-AR300M16-Ext als Router eingerichtet und im Repeater-Modus mit dem Hotspot verbunden
+- Pi per Ethernet angebunden; SSH-Zugriff und Internetverbindung (Ping) bestätigt
+- Samba-Dateiserver auf dem Pi installiert und eine Freigabe eingerichtet
+- Berechtigungen diesmal gruppenbasiert gelöst (Gruppe `sambashare`, setgid-Verzeichnis, `valid users = @sambashare`) statt mit `chmod -R 0777` wie im virtuellen Lab
+- Schreibzugriff von Windows aus getestet: Die Datei erscheint auf dem Pi mit korrektem Besitzer und korrekter Gruppe
+
+**Hinweis zum Datenvolumen:** Da die Verbindung über einen mobilen Hotspot mit begrenztem Datenvolumen läuft, werden größere System-Updates (`apt upgrade`) bewusst aufgeschoben.
 
 **Geplante nächste Schritte:**
-- Pi per Ethernet mit dem Netzwerk verbinden und SSH-Zugriff bestätigen
-- Samba-Dateiserver auf dem Pi einrichten, als Erweiterung des virtuellen Labs
-- `lab_healthcheck.sh` (oder ein ähnliches Skript) erweitern, um auch die Dienste des Pi zu überwachen
+- `lab_healthcheck.sh` erweitern, sodass auch der Pi und seine Dienste überwacht werden
 - Langfristig: Praxis mit einem Managed Switch und VLANs zur Netzwerksegmentierung
 
-## Roadmap
 
-Weitere geplante Erweiterungen des Labs:
-- Eine Datenbank-Komponente
-- Zusätzliche Sicherheitsmaßnahmen
-- Mehrere VMs, verbunden über eine Firewall
-- Ein einfaches Ticketsystem
+
+
 
 ---
 
